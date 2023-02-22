@@ -50,12 +50,12 @@ final public class ConsoleHandle {
             2 modify:  1 - header  2 - description
             3 remove
         2 - info print:
-            1 daily tasks.tmp
-            2 all tasks.tmp
-            3 specific date tasks.tmp
-            4 removed tasks.tmp
-            5 expired.tmp tasks.tmp
-        0 - stop
+            1 daily tasks
+            2 all tasks (groped by date)
+            3 specific date tasks
+            4 expired tasks
+            5 removed tasks
+        0 - save & exit
          */
 
         while (true) {
