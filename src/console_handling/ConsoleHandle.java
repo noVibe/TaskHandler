@@ -84,10 +84,8 @@ final public class ConsoleHandle {
                                     }
                                     if (period == 4) {
                                         chronos.put(DAY_OF_MONTH, validateRangeIntInput("""
-                                                        Set the day (last day is limited by the current month.
-                                                        It will be adjusted automatically for other ones).
-                                                        Enter the day number:\s""", 1,
-                                                now.get().getMonth().length(LocalDate.now().isLeapYear())));
+                                                        Set the day (monthly task can't have a day which is not present in every month).
+                                                        Enter the day number:\s""", 1,28));
                                     }
                                     if (period == 5) {
                                         chronos.put(DAY_OF_MONTH, validateRangeIntInput("Set the day of month: ", 1,

@@ -88,8 +88,11 @@ final public class TaskHandler {
     }
 
     public static void printTasksOnSpecificDate(int year, int month, int day) {
-        long r = tasks.stream().filter(t -> t.isActiveAt((LocalDate.of(year, month, day))))
-                .peek(t -> System.out.println("=========Tasks=Of=This=Date========\n" + t)).count();
+        long r = tasks.stream()
+                .filter(t -> t.isActiveAt((LocalDate.of(year, month, day))))
+                .sorted()
+                .peek(t -> System.out.println("=========Tasks=Of=This=Date========\n" + t))
+                .count();
         if (r == 0) System.out.println("\n|---No-Tasks-For-This-Date---|\n");
     }
 
