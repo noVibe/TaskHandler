@@ -34,18 +34,18 @@ final public class ConsoleHandle {
         TaskHandler.loadData();
 
         while (true) {
-            int general = validateIntInput("""
+            int general = validateRangeIntInput("""
                     ___________________
                     Task operations:  1
                     Watch info:       2
-                    Save and Exit: 0""", 1, 2, 0);
+                    Save and Exit: 0""", 0, 2);
             switch (general) {
                 case 0 -> {
                     TaskHandler.saveData();
                     System.exit(0);
                 }
                 case 1 -> {
-                    int taskOperations = validateIntInput("Add: 1. Modify: 2. Remove: 3. Back: 0", 1, 2, 3, 0);
+                    int taskOperations = validateRangeIntInput("Add: 1. Modify: 2. Remove: 3. Back: 0", 0, 3);
                     switch (taskOperations) {
                         case 1 -> addTask();
                         case 2 -> {
@@ -62,13 +62,13 @@ final public class ConsoleHandle {
                     }
                 }
                 case 2 -> {
-                    int info = validateIntInput("""
+                    int info = validateRangeIntInput("""
                             Today's tasks         1
                             All active tasks      2
                             Selected date tasks   3
                             Expired tasks         4
                             Removed tasks         5
-                            Back                  0""", 1, 2, 3, 4, 5, 0);
+                            Back                  0""", 0, 5);
                     switch (info) {
                         case 1 -> {
                             System.out.println("Today is " + now.get().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)));
@@ -99,24 +99,6 @@ final public class ConsoleHandle {
                 throw new IOException();
             } catch (IOException | InputMismatchException e) {
                 System.err.println("Incorrect input! \n" + message);
-            }
-        }
-    }
-
-    private static int validateIntInput(String message, int... args) {
-        System.out.println(message);
-        while (true) {
-            try {
-                int n;
-                String s = scanner.nextLine();
-                if (s.matches("\\d+")) n = Integer.parseInt(s);
-                else throw new IOException();
-                for (int arg : args) {
-                    if (arg == n) return arg;
-                }
-                throw new IOException();
-            } catch (IOException | InputMismatchException e) {
-                System.err.println("Incorrect input!\n" + message);
             }
         }
     }
@@ -163,10 +145,10 @@ final public class ConsoleHandle {
             return date;
         };
 
-        isPersonal = validateIntInput("Choose status. Personal: 1. Work: 2.", 1, 2);
+        isPersonal = validateRangeIntInput("Choose status. Personal: 1. Work: 2.", 1, 2);
         header = validateStringInput("Create the header:");
         description = validateStringInput("Write a description. Put '-' if you don't need it:");
-        period = validateIntInput("Set the period:\nOnce: 1. Daily: 2. Weekly: 3. Monthly: 4. Yearly: 5", 1, 2, 3, 4, 5);
+        period = validateRangeIntInput("Set the period:\nOnce: 1. Daily: 2. Weekly: 3. Monthly: 4. Yearly: 5", 1, 5);
         while (true) try {
             chronos.put(HOUR_OF_DAY, validateRangeIntInput("Set hours: ", 0, 23));
             chronos.put(MINUTE_OF_HOUR, validateRangeIntInput("Set minutes: ", 0, 59));
@@ -177,19 +159,18 @@ final public class ConsoleHandle {
                 while (!serviceDate.getDayOfWeek().equals(DayOfWeek.of(weekday)))
                     serviceDate = serviceDate.plusDays(1);
                 chronos.put(DAY_OF_MONTH, serviceDate.getDayOfMonth());
-            }
-            else if (period == 4) {
+            } else if (period == 4) {
                 chronos.put(DAY_OF_MONTH, validateRangeIntInput("""
                         Set the day (monthly task can't have a day which is not present in every month).
                         Enter the day number:\s""", 1, 28));
-            }
-            else if (period == 5) {
+            } else if (period == 5) {
                 chronos.put(MONTH_OF_YEAR, validateRangeIntInput("Set the month: ", 1, 12));
                 chronos.put(DAY_OF_MONTH, validateRangeIntInput("Set the day of month: ", 1,
                         now.get().withMonth(chronos.get(MONTH_OF_YEAR)).getMonth().minLength()));
             }
             LocalDateTime date = converter.apply(chronos);
-            if (period == 1 && (date = date.with(validateDateInput())).isBefore(now.get())) throw new PastCallException();
+            if (period == 1 && (date = date.with(validateDateInput())).isBefore(now.get()))
+                throw new PastCallException();
             TaskHandler.addNewTaskInstance(isPersonal == 1, header, description, date, periods.get(period));
             System.out.println("( +++++ Added successfully! +++++ )");
             chronos.clear();
@@ -202,7 +183,7 @@ final public class ConsoleHandle {
 
     public static void modifyTask(Task task) {
         System.out.printf("|. . .  .  .   Chosen task   .  .  . . .|\n%s\n. . . . . . . . . . . . . . . . . . . . .\n", task);
-        int modify = validateIntInput("Modify Header: 1. Description: 2. Back: 0.", 1, 2, 0);
+        int modify = validateRangeIntInput("Modify Header: 1. Description: 2. Back: 0.", 0, 2);
         if (modify == 0) return;
         if (modify == 1) task.setHeader(validateStringInput("Write a new Header: "));
         if (modify == 2) task.setDescription(validateStringInput("Write a new Description or use '-' to remove it: "));
