@@ -12,7 +12,6 @@ import java.time.format.FormatStyle;
 import java.time.temporal.ChronoField;
 import java.util.*;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static enums.Period.*;
@@ -21,14 +20,6 @@ import static java.time.temporal.ChronoField.*;
 final public class ConsoleHandle {
     static Scanner scanner = new Scanner(System.in);
     static Supplier<LocalDateTime> now = LocalDateTime::now;
-    static Function<HashMap<ChronoField, Integer>, LocalDateTime> converter = m -> {
-        LocalDateTime date = now.get();
-        for (ChronoField unit : m.keySet()) date = date.with(unit, m.get(unit));
-        return date;
-    };
-    static Predicate<HashMap<ChronoField, Integer>> checkIfPast = m -> now.get().isAfter(converter.apply(m));
-    static String header, description;
-    static int weekday, period, isPersonal, modify;
     static long id;
     static Map<Integer, Period> periods = new HashMap<>() {{
         put(1, ONCE);
@@ -38,7 +29,6 @@ final public class ConsoleHandle {
         put(5, YEARLY);
     }};
 
-    static HashMap<ChronoField, Integer> chronos = new LinkedHashMap<>();
 
     public static void main(String[] args) throws InterruptedException {
         TaskHandler.loadData();
@@ -85,14 +75,7 @@ final public class ConsoleHandle {
                             TaskHandler.printTodayTasks();
                         }
                         case 2 -> TaskHandler.printAllActiveTasks();
-                        case 3 -> {
-                            int year = validateRangeIntInput("Choose the year: ", now.get().getYear(), LocalDate.MAX.getYear());
-                            int month = validateRangeIntInput("Choose the month: ",
-                                    LocalDate.now().getYear() == year ? now.get().getMonthValue() : 1, 12);
-                            int day = validateRangeIntInput("Choose the day: ", period == 1 &&
-                                    now.get().getYear() == year && now.get().getMonthValue() == month ? now.get().getDayOfMonth() : 1, 31);
-                            TaskHandler.printTasksOnSpecificDate(year, month, day);
-                        }
+                        case 3 -> TaskHandler.printTasksOnSpecificDate(validateDateInput());
                         case 4 -> TaskHandler.printExpiredTasks();
                         case 5 -> TaskHandler.printRemovedTasks();
                     }
@@ -169,6 +152,17 @@ final public class ConsoleHandle {
     }
 
     public static void addTask() throws InterruptedException {
+        String header, description;
+        int weekday, period, isPersonal;
+
+        HashMap<ChronoField, Integer> chronos = new LinkedHashMap<>();
+
+        Function<HashMap<ChronoField, Integer>, LocalDateTime> converter = m -> {
+            LocalDateTime date = now.get();
+            for (ChronoField unit : m.keySet()) date = date.with(unit, m.get(unit));
+            return date;
+        };
+
         isPersonal = validateIntInput("Choose status. Personal: 1. Work: 2.", 1, 2);
         header = validateStringInput("Create the header:");
         description = validateStringInput("Write a description. Put '-' if you don't need it:");
@@ -183,34 +177,20 @@ final public class ConsoleHandle {
                 while (!serviceDate.getDayOfWeek().equals(DayOfWeek.of(weekday)))
                     serviceDate = serviceDate.plusDays(1);
                 chronos.put(DAY_OF_MONTH, serviceDate.getDayOfMonth());
-            } else {
-                if (period == 1) {
-                    chronos.put(YEAR, validateRangeIntInput("Set the year: ", now.get().getYear(), LocalDate.MAX.getYear()));
-                }
-                if (period == 5 || period == 1) {
-                    chronos.put(MONTH_OF_YEAR, validateRangeIntInput("Set the month: ",
-                            period == 1 && LocalDate.now().getYear() == chronos.get(YEAR) ? now.get().getMonthValue() : 1, 12));
-                }
-                if (period == 4) {
-                    chronos.put(DAY_OF_MONTH, validateRangeIntInput("""
-                                                        Set the day (monthly task can't have a day which is not present in every month).
-                                                        Enter the day number:\s""", 1,28));
-                }
-                if (period == 5) {
-                    chronos.put(DAY_OF_MONTH, validateRangeIntInput("Set the day of month: ", 1,
-                            now.get().withMonth(chronos.get(MONTH_OF_YEAR))
-                                    .getMonth().length(LocalDate.now().isLeapYear())));
-
-                }
-                if (period == 1) {
-                    chronos.put(DAY_OF_MONTH, validateRangeIntInput("Set the day: ",
-                            now.get().getYear() == chronos.get(YEAR) &&
-                                    now.get().getMonthValue() == chronos.get(MONTH_OF_YEAR) ? now.get().getDayOfMonth() : 1,
-                            Month.of(chronos.get(MONTH_OF_YEAR)).length(Year.isLeap(chronos.get(YEAR)))));
-                }
             }
-            if (period == 1 && checkIfPast.test(chronos)) throw new PastCallException();
-            TaskHandler.addNewTaskInstance(isPersonal == 1, header, description, converter.apply(chronos), periods.get(period));
+            else if (period == 4) {
+                chronos.put(DAY_OF_MONTH, validateRangeIntInput("""
+                        Set the day (monthly task can't have a day which is not present in every month).
+                        Enter the day number:\s""", 1, 28));
+            }
+            else if (period == 5) {
+                chronos.put(MONTH_OF_YEAR, validateRangeIntInput("Set the month: ", 1, 12));
+                chronos.put(DAY_OF_MONTH, validateRangeIntInput("Set the day of month: ", 1,
+                        now.get().withMonth(chronos.get(MONTH_OF_YEAR)).getMonth().minLength()));
+            }
+            LocalDateTime date = converter.apply(chronos);
+            if (period == 1 && (date = date.with(validateDateInput())).isBefore(now.get())) throw new PastCallException();
+            TaskHandler.addNewTaskInstance(isPersonal == 1, header, description, date, periods.get(period));
             System.out.println("( +++++ Added successfully! +++++ )");
             chronos.clear();
             break;
@@ -222,10 +202,20 @@ final public class ConsoleHandle {
 
     public static void modifyTask(Task task) {
         System.out.printf("|. . .  .  .   Chosen task   .  .  . . .|\n%s\n. . . . . . . . . . . . . . . . . . . . .\n", task);
-        modify = validateIntInput("Modify Header: 1. Description: 2. Back: 0.", 1, 2, 0);
+        int modify = validateIntInput("Modify Header: 1. Description: 2. Back: 0.", 1, 2, 0);
         if (modify == 0) return;
         if (modify == 1) task.setHeader(validateStringInput("Write a new Header: "));
         if (modify == 2) task.setDescription(validateStringInput("Write a new Description or use '-' to remove it: "));
         System.out.println("( ~~~~~ Modified successfully! ~~~~~ )");
+    }
+
+    public static LocalDate validateDateInput() {
+        LocalDate date = LocalDate.now();
+        date = date.withYear(validateRangeIntInput("Choose the year: ", now.get().getYear(), LocalDate.MAX.getYear()));
+        date = date.withMonth(validateRangeIntInput("Choose the month: ",
+                LocalDate.now().getYear() == date.getYear() ? now.get().getMonthValue() : 1, 12));
+        return date.withDayOfMonth(validateRangeIntInput("Choose the day: ",
+                now.get().getYear() == date.getYear() && now.get().getMonthValue() == date.getMonthValue() ? now.get().getDayOfMonth() : 1,
+                date.getMonth().length(date.isLeapYear())));
     }
 }

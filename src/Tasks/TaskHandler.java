@@ -70,7 +70,7 @@ final public class TaskHandler {
 
     public static void printTodayTasks() {
         refresh();
-        printTasksOnSpecificDate(LocalDate.now().getYear(), LocalDate.now().getMonthValue(), LocalDate.now().getDayOfMonth());
+        printTasksOnSpecificDate(LocalDate.now());
     }
 
 
@@ -87,9 +87,9 @@ final public class TaskHandler {
         else for (Task t : expired) System.out.println("============Expired=Task============\n" + t);
     }
 
-    public static void printTasksOnSpecificDate(int year, int month, int day) {
+    public static void printTasksOnSpecificDate(LocalDate date) {
         long r = tasks.stream()
-                .filter(t -> t.isActiveAt((LocalDate.of(year, month, day))))
+                .filter(t -> t.isActiveAt(date))
                 .sorted()
                 .peek(t -> System.out.println("=========Tasks=Of=This=Date========\n" + t))
                 .count();
