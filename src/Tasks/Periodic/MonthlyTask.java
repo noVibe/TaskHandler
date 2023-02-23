@@ -20,8 +20,8 @@ public class MonthlyTask extends Task {
 
     @Override
     protected void refreshDate() {
-        while (getDate().isBefore(LocalDate.now()))
-            setDateTime(getDateTime().plusMonths(1));
+        setDateTime(getDateTime().withYear(LocalDate.now().getYear()).withMonth(LocalDate.now().getMonthValue()));
+        if (getDate().isBefore(LocalDate.now())) setDateTime(getDateTime().plusMonths(1));
     }
 
     @Override
