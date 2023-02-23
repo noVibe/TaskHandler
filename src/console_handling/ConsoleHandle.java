@@ -38,14 +38,15 @@ final public class ConsoleHandle {
                     ___________________
                     Task operations:  1
                     Watch info:       2
-                    Save and Exit: 0""", 0, 2);
+                    Save and Exit: 0
+                    """, 0, 2);
             switch (general) {
                 case 0 -> {
                     TaskHandler.saveData();
                     System.exit(0);
                 }
                 case 1 -> {
-                    int taskOperations = validateRangeIntInput("Add: 1. Modify: 2. Remove: 3. Back: 0", 0, 3);
+                    int taskOperations = validateRangeIntInput("Add: 1. Modify: 2. Remove: 3. Back: 0\n", 0, 3);
                     switch (taskOperations) {
                         case 1 -> addTask();
                         case 2 -> {
@@ -68,7 +69,8 @@ final public class ConsoleHandle {
                             Selected date tasks   3
                             Expired tasks         4
                             Removed tasks         5
-                            Back                  0""", 0, 5);
+                            Back                  0
+                            """, 0, 5);
                     switch (info) {
                         case 1 -> {
                             System.out.println("Today is " + now.get().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)));
@@ -145,10 +147,10 @@ final public class ConsoleHandle {
             return date;
         };
 
-        isPersonal = validateRangeIntInput("Choose status. Personal: 1. Work: 2.", 1, 2);
-        header = validateStringInput("Create the header:");
-        description = validateStringInput("Write a description. Put '-' if you don't need it:");
-        period = validateRangeIntInput("Set the period:\nOnce: 1. Daily: 2. Weekly: 3. Monthly: 4. Yearly: 5", 1, 5);
+        isPersonal = validateRangeIntInput("Choose status. Personal: 1. Work: 2.\n", 1, 2);
+        header = validateStringInput("Create the header:\n");
+        description = validateStringInput("Write a description. Put '-' if you don't need it:\n");
+        period = validateRangeIntInput("Set the period:\nOnce: 1. Daily: 2. Weekly: 3. Monthly: 4. Yearly: 5\n", 1, 5);
         while (true) try {
             chronos.put(HOUR_OF_DAY, validateRangeIntInput("Set hours: ", 0, 23));
             chronos.put(MINUTE_OF_HOUR, validateRangeIntInput("Set minutes: ", 0, 59));
@@ -169,11 +171,11 @@ final public class ConsoleHandle {
                         now.get().withMonth(chronos.get(MONTH_OF_YEAR)).getMonth().minLength()));
             }
             LocalDateTime date = converter.apply(chronos);
+            chronos.clear();
             if (period == 1 && (date = date.with(validateDateInput())).isBefore(now.get()))
                 throw new PastCallException();
             TaskHandler.addNewTaskInstance(isPersonal == 1, header, description, date, periods.get(period));
             System.out.println("( +++++ Added successfully! +++++ )");
-            chronos.clear();
             break;
         } catch (PastCallException | DateTimeException e) {
             System.err.println(e.getMessage());
@@ -183,7 +185,7 @@ final public class ConsoleHandle {
 
     public static void modifyTask(Task task) {
         System.out.printf("|. . .  .  .   Chosen task   .  .  . . .|\n%s\n. . . . . . . . . . . . . . . . . . . . .\n", task);
-        int modify = validateRangeIntInput("Modify Header: 1. Description: 2. Back: 0.", 0, 2);
+        int modify = validateRangeIntInput("Modify Header: 1. Description: 2. Back: 0.\n", 0, 2);
         if (modify == 0) return;
         if (modify == 1) task.setHeader(validateStringInput("Write a new Header: "));
         if (modify == 2) task.setDescription(validateStringInput("Write a new Description or use '-' to remove it: "));
