@@ -34,7 +34,7 @@ final public class TaskHandler {
         while (iterator.hasNext()) {
             var task = iterator.next();
             task.refreshDate();
-            if (!task.isActual()) {
+            if (task.getDate().isBefore(LocalDate.now())) {
                 expired.add(0, task);
                 iterator.remove();
             }
@@ -69,7 +69,6 @@ final public class TaskHandler {
 
 
     public static void printTodayTasks() {
-        refresh();
         printTasksOnSpecificDate(LocalDate.now());
     }
 
@@ -88,6 +87,7 @@ final public class TaskHandler {
     }
 
     public static void printTasksOnSpecificDate(LocalDate date) {
+        refresh();
         long r = tasks.stream()
                 .filter(t -> t.isActiveAt(date))
                 .sorted()
@@ -122,9 +122,9 @@ final public class TaskHandler {
             t = (LinkedList<Task>) inOS.readObject();
             for (Task task : t) {
                 id = task.getId() < id ? id : task.getId() + 1;
-                if (task.isActual()) tasks.add(task);
+                if (!task.isActual()) removed.add(task);
                 else if (task.getPeriod().equals(ONCE) && task.getDate().isBefore(LocalDate.now())) expired.add(task);
-                else removed.add(task);
+                else tasks.add(task);
             }
         } catch (FileNotFoundException e) {
             saveData();

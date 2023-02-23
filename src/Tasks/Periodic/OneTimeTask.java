@@ -19,9 +19,8 @@ public class OneTimeTask extends Task {
     }
 
     @Override
-    protected void refreshDate() {
-        if (getDate().isBefore(LocalDate.now())) setActual(false);
-    }
+    protected void refreshDate(){}
+
 
     @Override
     public String toString() {
